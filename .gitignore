@@ -1,0 +1,7 @@
+model/
+fixed_len_model/
+data/
+w2v_model
+seq2seq/
+recurrentshop/
+utils/__pycache__

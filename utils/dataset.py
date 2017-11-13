@@ -9,7 +9,7 @@ din_path_prefix = 'data/input/train.din'
 
 def get_batch(batch_size = 128):
     file_idx = random.randint(0, 19)
-    select = random.sample(range(1000), batch_size)
+    select = random.sample(range(500), batch_size)
 
     full_data = np.load(data_path_prefix + '.' + str(file_idx) + '.npy')
     full_label = np.load(label_path_prefix + '.' + str(file_idx) + '.npy')

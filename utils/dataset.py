@@ -11,17 +11,9 @@ def get_batch(batch_size = 128):
     file_idx = random.randint(0, 19)
     select = random.sample(range(1000), batch_size)
 
-    full_data = None
-    full_label = None
-    full_din = None
-    with open(data_path_prefix + '.' + str(file_idx), 'rb') as p:
-        full_data = pickle.load(p)
-
-    with open(label_path_prefix + '.' + str(file_idx), 'rb') as p:
-        full_label = pickle.load(p)
-
-    with open(din_path_prefix + '.' + str(file_idx), 'rb') as p:
-        full_din = pickle.load(p)
+    full_data = np.load(data_path_prefix + '.' + str(file_idx) + '.npy')
+    full_label = np.load(label_path_prefix + '.' + str(file_idx) + '.npy')
+    full_din = np.load(din_path_prefix + '.' + str(file_idx) + '.npy')
 
     data = []
     label = []

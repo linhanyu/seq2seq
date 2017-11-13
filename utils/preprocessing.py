@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/vsr/bin/python3
 import jieba
 from gensim.models import Word2Vec
 from keras.utils import np_utils
@@ -21,6 +21,9 @@ with open('../jieba_dict/stop_words.txt','r',encoding='utf-8') as sw:
     for line in sw:
         stopwordset.add(line.strip('\n'))
 
+def trim(line):
+    return ''.join(line.split(' '))
+
 def segment(line):
     words = []
     line_split = jieba.cut(line, cut_all = False)
@@ -41,28 +44,21 @@ def to_wv_seq(word_seq):
     return vec_seq
 
 
-def to_fixed_wv_seq(word_seq, length = 10):
+def to_fixed_wv_seq(word_seq, length):
     vec_seq = []
-    i = 0
     for word in word_seq:
-        if i >= length - 1:
-            vec_seq.append(end_wv)
-            break
 
         if word not in w2v_model.wv.vocab:
             vec_seq.append(unk_wv)
         else:
             vec_seq.append(w2v_model.wv[word].tolist())
 
-        i += 1
-
-    if len(vec_seq) < length:
-        vec_seq.append(end_wv)
+    vec_seq.append(end_wv)
 
     while len(vec_seq) < length:
         vec_seq.append(pad_wv)
 
-    return vec_seq
+    return vec_seq[:length]
 
 
 def to_onehot(data, num_classes):

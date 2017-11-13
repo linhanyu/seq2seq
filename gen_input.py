@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import os
 import gc
 import pickle
 import sys
@@ -13,9 +14,9 @@ raw_data = sys.argv[1]
 dst_file_x = 'data/input/train.x'
 dst_file_y = 'data/input/train.y'
 dst_file_din = 'data/input/train.din'
-word_dict_file = 'data/dict/word_dict'
-max_lines = 1000
-line_length = 10
+word_dict_file = 'data/dict/word_dict.pkl'
+max_lines = 500
+line_length = 15
 
 word_dict = set()
 word_dict.add(start_sym)
@@ -32,7 +33,8 @@ while True:
     if not line:
         break
 
-    qa = [segment(single_str) for single_str in line.split('\t')]
+    qa = [segment(trim(single_str.rstrip())) for single_str in line.split('\t')]
+    assert len(qa) == 2, 'unexpected length: ' + len(qa)
     seg_data.append(qa)
 
 src_file.close()
@@ -41,12 +43,11 @@ log('END', 'load text')
 # dump train_x, each 1000 line dump to a single file
 log('START', 'wv processing')
 for page in range(0, len(seg_data), max_lines):
-    train_x = [to_wv_seq(qa[0]) for qa in seg_data[page:page + max_lines]]
+    train_x = [to_fixed_wv_seq(qa[0], length = line_length) for qa in seg_data[page:page + max_lines]]
 
-    # assert np.array(train_x).shape == (max_lines, line_length, 250), 'unexpected shape: ' + str(np.array(train_x).shape)
-    with open(dst_file_x + '.' + str(int(page / max_lines)), 'wb') as p:
-        pickle.dump(train_x, p)
-    log('PROGRESS', 'process ' + str(page + 1000) + ' lines')
+    assert np.array(train_x).shape == (max_lines, line_length, 250), 'unexpected shape: ' + str(np.array(train_x).shape)
+    np.save(dst_file_x + '.' + str(int(page / max_lines)), np.array(train_x))
+    log('PROGRESS', 'process ' + str(page + max_lines) + ' lines')
 log('END', 'wv processing')
 
 # free memory
@@ -77,6 +78,10 @@ gc.collect()
 word_dict = {el: idx for idx, el in enumerate(word_dict)}
 word_dict_len = len(word_dict)
 
+cmd = 'echo ' + str(word_dict_len) + ' > word_dict_len'
+log('SHELL', cmd)
+os.system(cmd)
+
 # dump train_y, each 1000 line dump to a single file
 log('START', 'one-hot processing')
 for page in range(0, len(seg_data), max_lines):
@@ -85,41 +90,31 @@ for page in range(0, len(seg_data), max_lines):
         for qa in seg_data[page:page + max_lines] \
     ]
 
-    # insert end symbol
+    # insert end symbol and fixd length
     for i in range(len(train_y)):
         train_y[i] += [word_dict[end_sym]]
 
-    # clip length of each line to 10
-    # for i in range(len(train_y)):
-    #     if len(train_y[i]) >= line_length:
-    #         train_y[i][line_length - 1] = word_dict[end_sym]
-    #         train_y[i] = train_y[i][:line_length]
-    #
-    #     else:
-    #         train_y[i].append(word_dict[end_sym])
-    #         while len(train_y[i]) < line_length:
-    #             train_y[i].append(word_dict[pad_sym])
+        while len(train_y[i]) < line_length:
+            train_y[i] += [word_dict[pad_sym]]
+
+        train_y[i] = train_y[i][:line_length]
 
     # handle decoder input
     train_d_in = deepcopy(train_y)
     for i in range(len(train_d_in)):
         train_d_in[i] = [word_dict[start_sym]] + train_d_in[i]
-        train_d_in[i] = train_d_in[i][:len(train_d_in[i]) - 1]
+        train_d_in[i] = train_d_in[i][:line_length]
 
     # one-hot encoding
     for i in range(len(train_y)):
         train_y[i] = to_onehot(train_y[i], num_classes = word_dict_len)
         train_d_in[i] = to_onehot(train_d_in[i], num_classes = word_dict_len)
 
-    # assert np.array(train_y).shape == (max_lines, line_length, word_dict_len), 'unexpected shape: ' + str((max_lines, line_length, word_dict_len))
-    # assert np.array(train_d_in).shape == (max_lines, line_length, word_dict_len), 'unexpected shape: ' + str((max_lines, line_length, word_dict_len))
-    with open(dst_file_y + '.' + str(int(page / max_lines)), 'wb') as p:
-        pickle.dump(train_y, p)
-
-    with open(dst_file_din + '.' + str(int(page / max_lines)), 'wb') as p:
-        pickle.dump(train_d_in, p)
-
-    log('PROGRESS', 'process ' + str(page + 1000) + ' lines')
+    assert np.array(train_y).shape == (max_lines, line_length, word_dict_len), 'unexpected shape: ' + str(np.array(train_y).shape)
+    assert np.array(train_d_in).shape == (max_lines, line_length, word_dict_len), 'unexpected shape: ' + str(np.array(train_d_in).shape)
+    np.save(dst_file_y + '.' + str(int(page / max_lines)), np.array(train_y))
+    np.save(dst_file_din + '.' + str(int(page / max_lines)), np.array(train_d_in))
+    log('PROGRESS', 'process ' + str(page + max_lines) + ' lines')
 
 
 log('END', 'one-hot processing')

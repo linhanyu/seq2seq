@@ -5,3 +5,4 @@ w2v_model
 seq2seq/
 recurrentshop/
 utils/__pycache__
+word_dict_len

@@ -106,12 +106,12 @@ for page in range(0, len(seg_data), max_lines):
         train_d_in[i] = train_d_in[i][:line_length]
 
     # one-hot encoding
-    for i in range(len(train_y)):
-        train_y[i] = to_onehot(train_y[i], num_classes = word_dict_len)
-        train_d_in[i] = to_onehot(train_d_in[i], num_classes = word_dict_len)
+    # for i in range(len(train_y)):
+    #     train_y[i] = to_onehot(train_y[i], num_classes = word_dict_len)
+    #     train_d_in[i] = to_onehot(train_d_in[i], num_classes = word_dict_len)
 
-    assert np.array(train_y).shape == (max_lines, line_length, word_dict_len), 'unexpected shape: ' + str(np.array(train_y).shape)
-    assert np.array(train_d_in).shape == (max_lines, line_length, word_dict_len), 'unexpected shape: ' + str(np.array(train_d_in).shape)
+    assert np.array(train_y).shape == (max_lines, line_length), 'unexpected shape: ' + str(np.array(train_y).shape)
+    assert np.array(train_d_in).shape == (max_lines, line_length), 'unexpected shape: ' + str(np.array(train_d_in).shape)
     np.save(dst_file_y + '.' + str(int(page / max_lines)), np.array(train_y))
     np.save(dst_file_din + '.' + str(int(page / max_lines)), np.array(train_d_in))
     log('PROGRESS', 'process ' + str(page + max_lines) + ' lines')

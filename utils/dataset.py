@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from utils.preprocessing import to_onehot
 import numpy as np
 import random
 import pickle
@@ -8,7 +9,7 @@ label_path_prefix = 'data/input/train.y'
 din_path_prefix = 'data/input/train.din'
 
 def get_batch(batch_size = 128):
-    file_idx = random.randint(0, 19)
+    file_idx = random.randint(0, 199)
     select = random.sample(range(500), batch_size)
 
     full_data = np.load(data_path_prefix + '.' + str(file_idx) + '.npy')
@@ -21,7 +22,7 @@ def get_batch(batch_size = 128):
 
     for idx in select:
         data.append(full_data[idx])
-        label.append(full_label[idx])
-        din.append(full_din[idx])
+        label.append(to_onehot(full_label[idx], num_classes = 51213))
+        din.append(to_onehot(full_din[idx], num_classes = 51213))
 
     return np.array(data), np.array(din), np.array(label)
